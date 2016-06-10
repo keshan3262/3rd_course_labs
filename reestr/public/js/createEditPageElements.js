@@ -180,7 +180,6 @@ class EntityEdit extends React.Component {
 		this.setState({affiliatesFieldIds: newAffIds, affiliates: newAffiliates});
 	}
 	finishEdit(event) {
-		debugger;
 		var licenses = this.state.licenses;
 		var newLicenses = [];
 		licenses.map(function(item) {if (item != null) newLicenses.push(item)});
