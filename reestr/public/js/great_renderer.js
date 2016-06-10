@@ -34,7 +34,6 @@ class Body extends React.Component {
 		);
 	}
 	finishEdit(event, objNewData) {
-		debugger;
 		event.preventDefault();
 		if (this.state.state == NavState.Edit) {
 			objNewData._id = this.state.id;
