@@ -5,6 +5,16 @@ var simpleProps = ["entity_name", "entity_type", "edrpou", "certificate_series",
 					"certified_date", "address", "phone", "email", "licenses", "service_type"];
 var regexProps = ["entity_name", "entity_type", "address", "service_type", "manager_full_name"];
 
+var parseDate = function(str) {
+	var g1 = str.split('.');
+	if (g1.length != 3)
+		return null;
+	for (var i = 0; i < 3; i++)
+		if (isNaN(g1[i] * 0))
+			return null;
+	return new Date(g1[2], g1[1] - 1, g1[0]);
+}
+
 var tokenizeSecondPart = function(secondPart) {
 	var checkForHexRegExp = new RegExp("^[0-9a-fA-F]{24}$");
 	if (secondPart.length == 0) {
@@ -41,14 +51,15 @@ var tokenizeSecondPart = function(secondPart) {
 
 module.exports.postLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
-		var g1 = req.body.certified_date.split('.');
-		if (g1.length != 3)
+		var d1 = parseDate(req.body.certified_date);
+		if (d1 == null)
 			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
-		req.body.certified_date = new Date(g1[2], g1[1], g1[0]);
+		else
+			req.body.certified_date = d1;
 	}
 	else {
 		var k1 = new Date();
-		req.body.certified_date = new Date(k1.getFullYear(), k1.getMonth() + 1, k1.getDate());
+		req.body.certified_date = new Date(k1.getFullYear(), k1.getMonth(), k1.getDate());
 	}
 	Individual.find({full_name: req.body.manager_full_name}, function(err, objs) {
 		if (err) {
@@ -90,9 +101,6 @@ module.exports.postLegalEntity = function(req, res) {
 						});
 					}
 					else {
-						console.log("\n");
-						console.log(names);
-						console.log(en1.affiliates);
 						var name1 = names.pop();
 						LegalEntity.find({"entity_name": name1}, function(err, objs2) {
 							if (err) {
@@ -132,16 +140,19 @@ module.exports.postLegalEntity = function(req, res) {
 };
 
 module.exports.getLegalEntity = function(req, res) {
+	console.log(req.body.certified_date);
 	var filter = tokenizeSecondPart(req.params.filter1);
-	if (filter.certified_date) {
-		var g1 = filter.certified_date.split('.');
-		if (g1.length != 3)
-			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
-		filter.certified_date = new Date(g1[2], g1[1], g1[0]);
-	}
 	for (var key1 in filter)
 		if (regexProps.indexOf(key1) != -1)
 			filter[key1] = {$regex: filter[key1], $options: "i"};
+	if (filter.certified_date) {
+		var d1 = parseDate(filter.certified_date);
+		if (d1 == null)
+			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+		else
+			filter.certified_date = d1;
+	}
+	console.log(filter);
 	var anyway = function() {
 		LegalEntity.find(filter, function(err, objs) {
 			if (err)
@@ -157,10 +168,25 @@ module.exports.getLegalEntity = function(req, res) {
 				else {
 					var obj = newObjs2.pop();
 					var newObj = {};
-					for (var i = 0; i < simpleProps.length; i++)
-						newObj[simpleProps[i]] = obj[simpleProps[i]];
+					for (var i = 0; i < simpleProps.length; i++) {
+						if (simpleProps[i] == 'licenses') {
+							newObj.licenses = [];
+							for (var j = 0; j < obj.licenses.length; j++) {
+								var lic1 = {};
+								var startDate = obj.licenses[j].start_date;
+								var dueDate = obj.licenses[j].due_date;
+								lic1.start_date = startDate.getDate() + '.' + (startDate.getMonth() + 1) + '.' + startDate.getFullYear();
+								lic1.due_date = (dueDate == null) ? null : (dueDate.getDate() + '.' + (dueDate.getMonth() + 1) + '.' + dueDate.getFullYear());
+								lic1.license_number = obj.licenses[j].license_number;
+								lic1.service_name = obj.licenses[j].service_name;
+								newObj.licenses.push(lic1);
+							}
+						}
+						else
+							newObj[simpleProps[i]] = obj[simpleProps[i]];
+					}
 					var date1 = newObj.certified_date;
-					newObj.certified_date = date1.getDate() + '.' + date1.getMonth() + '.' + date1.getFullYear();
+					newObj.certified_date = date1.getDate() + '.' + (date1.getMonth() + 1) + '.' + date1.getFullYear();
 					newObj._id = obj._id;
 					Individual.findById(obj.manager, function(err, obj2) {
 						if (err) {
@@ -185,8 +211,34 @@ module.exports.getLegalEntity = function(req, res) {
 											res.send(err);
 										}
 										else {
-											affiliates.push(obj3);
-											getAffiliates(objIds);
+											var obj4 = {};
+											for (var i = 0; i < simpleProps.length; i++) {
+												if (simpleProps[i] == 'licenses') {
+													for (var j = 0; j < obj3.licenses.length; j++) {
+														var lic1 = {};
+														var startDate = obj3.licenses[j].start_date;
+														var dueDate = obj3.licenses[j].due_date;
+														lic1.start_date = startDate.getDate() + '.' + (startDate.getMonth() + 1) + '.' + startDate.getFullYear();
+														lic1.due_date = (dueDate == null) ? null : (dueDate.getDate() + '.' + (dueDate.getMonth() + 1) + '.' + dueDate.getFullYear());
+														lic1.license_number = obj3.licenses[j].license_number;
+														lic1.service_name = obj3.licenses[j].service_name;
+														obj4.licenses.push(lic1);
+													}
+												}
+												else
+													obj4[simpleProps[i]] = obj3[simpleProps[i]];
+											}
+											var date1 = obj3.certified_date;
+											obj4.certified_date = date1.getDate() + '.' + (date1.getMonth() + 1) + '.' + date1.getFullYear();
+											Individual.findById(obj3.manager, function(err, obj5) {
+												if (err)
+													res.send(err);
+												else {
+													obj4.manager_full_name = obj5.full_name;
+													affiliates.push(obj4);
+													getAffiliates(objIds);
+												}
+											});
 										}
 									});
 								}
@@ -221,10 +273,11 @@ module.exports.getLegalEntity = function(req, res) {
 
 module.exports.putByIdLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
-		var g1 = req.body.certified_date.split('.');
-		if (g1.length != 3)
+		var d1 = parseDate(req.body.certified_date);
+		if (d1 == null)
 			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
-		req.body.certified_date = new Date(g1[2], g1[1], g1[0]);
+		else
+			req.body.certified_date = d1;
 	}
 	LegalEntity.findById(req.body._id, function(err, obj) {
 		if (err) {
@@ -246,8 +299,28 @@ module.exports.putByIdLegalEntity = function(req, res) {
 						if (objNames.length == 0) {
 							obj.affiliates = affiliatesIds;
 							for (var i = 0; i < simpleProps.length; i++) {
-								if (simpleProps[i] in req.body) {
-									obj[simpleProps[i]] = req.body[simpleProps[i]];
+								if (req.body[simpleProps[i]] != null) {
+									if (simpleProps[i] != 'licenses')
+										obj[simpleProps[i]] = req.body[simpleProps[i]];
+									else {
+										obj.licenses = [];
+										for (var j = 0; j < req.body.licenses.length; j++) {
+											var lic1 = {};
+											lic1.start_date = parseDate(req.body.licenses[j].start_date);
+											if (lic1.start_date == null)
+												res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+											if (req.body.licenses[j].due_date == null)
+												lic1.due_date = null;
+											else {
+												lic1.due_date = parseDate(req.body.licenses[j].due_date);
+												if (lic1.due_date == null)
+													res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+											}
+											lic1.service_name = req.body.licenses[j].service_name;
+											lic1.license_number = req.body.licenses[j].license_number;
+											obj.licenses.push(lic1);
+										}
+									}
 								}
 							}
 							obj.save(function(err) {
@@ -271,7 +344,27 @@ module.exports.putByIdLegalEntity = function(req, res) {
 				else {
 					for (var i = 0; i < simpleProps.length; i++) {
 						if (req.body[simpleProps[i]] != null) {
-							obj[simpleProps[i]] = req.body[simpleProps[i]];
+							if (simpleProps[i] != 'licenses')
+								obj[simpleProps[i]] = req.body[simpleProps[i]];
+							else {
+								obj.licenses = [];
+								for (var j = 0; j < req.body.licenses.length; j++) {
+									var lic1 = {};
+									lic1.start_date = parseDate(req.body.licenses[j].start_date);
+									if (lic1.start_date == null)
+										res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+									if (req.body.licenses[j].due_date == null)
+										lic1.due_date = null;
+									else {
+										lic1.due_date = parseDate(req.body.licenses[j].due_date);
+										if (lic1.due_date == null)
+											res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+									}
+									lic1.service_name = req.body.licenses[j].service_name;
+									lic1.license_number = req.body.licenses[j].license_number;
+									obj.licenses.push(lic1);
+								}
+							}
 						}
 					}
 					obj.save(function(err) {
@@ -315,14 +408,12 @@ module.exports.putByIdLegalEntity = function(req, res) {
 
 module.exports.deleteLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
-		var g1 = req.body.certified_date.split('.');
-		if (g1.length != 3)
+		var d1 = parseDate(req.body.certified_date);
+		if (d1 == null)
 			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
-		req.body.certified_date = new Date(g1[2], g1[1], g1[0]);
+		else
+			req.body.certified_date = d1;
 	}
-	//for (var key1 in req.body)
-	//	if (regexProps.indexOf(key1) != -1)
-	//		req.body[key1] = {$regex: req.body[key1], $options: "i"};
 	console.log(req.body);
 	var anyway = function() {
 		LegalEntity.find(req.body, function(err, objs) {
