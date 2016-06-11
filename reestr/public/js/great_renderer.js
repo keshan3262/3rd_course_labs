@@ -71,7 +71,7 @@ class Body extends React.Component {
 		if (filterAsObj.certified_date != null) {
 			var x1 = filterAsObj.certified_date.split('.');
 			if (x1.length != 3) {
-				this.setState({messageHere: true, message: "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+				this.setState({institutions: [], message: "Неправильний формат дати. Правильний: ДД.ММ.РРРР", requestProcessed: true});
 				return;
 			}
 			else {
@@ -79,7 +79,7 @@ class Body extends React.Component {
 				for (var i = 0; i < 3; i++)
 					valid &= !(isNaN(x1[i] * 0));
 				if (!valid) {
-					this.setState({messageHere: true, message: "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+					this.setState({institutions: [], message: "Неправильний формат дати. Правильний: ДД.ММ.РРРР", requestProcessed: true});
 					return;
 				}
 			}
@@ -161,7 +161,7 @@ class Body extends React.Component {
 				[grenade.state.state].map(function(item1) {
 					switch (grenade.state.state) {
 						case NavState.Main: {
-							return (<MainPageElement msg1={null} stateController={grenade} data={grenade.state.institutions} requestProcessed={grenade.state.requestProcessed}/>);
+							return (<MainPageElement msg1={null} stateController={grenade} data={grenade.state.institutions} requestProcessed={grenade.state.requestProcessed} message={grenade.state.message}/>);
 							break;
 						}
 						case NavState.View: {

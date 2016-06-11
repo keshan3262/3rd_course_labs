@@ -20,20 +20,24 @@ class OneLicenseEdit extends React.Component {
 		var mainEl = this.props.mainElement;
 		var data1 = this.props.data;
 		return (
-			<tr>
-			{
-				licenseProps.map(function(item) {
-					return (
-						<td colSpan={item.colspan}>
-							<input type="text" className="form-control" id={elementId + "." + item.field} placeholder={item.label} onChange={mainEl.licenseValueChanged} value={(data1 != null) ? data1[item.field] : ""}></input>
-						</td>
-					);
-				})
-			}
+			<tr style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
 				<td>
-					<button type="button" className="btn btn-link" id={elementId + ".remove"} onClick={mainEl.removeLicenseEntry}>
-						<span className="glyphicon glyphicon-minus"></span>
-					</button>
+					<div className="row">
+					{
+						licenseProps.map(function(item) {
+							return (
+								<div className={"col-md-" + ((item.field == "service_name") ? 5 : item.colspan * 2)}>
+									<input type="text" className="form-control" id={elementId + "." + item.field} placeholder={item.label} onChange={mainEl.licenseValueChanged} value={(data1 != null) ? data1[item.field] : ""}></input>
+								</div>
+							);
+						})
+					}
+						<div className="col-md-1">
+							<button type="button" className="btn btn-link" id={elementId + ".remove"} onClick={mainEl.removeLicenseEntry}>
+								<span className="glyphicon glyphicon-minus"></span>
+							</button>
+						</div>
+					</div>
 				</td>
 			</tr>
 		)
@@ -51,7 +55,7 @@ class LicensesEdit extends React.Component {
 		var licIds = mainEl.state.licensesFieldIds;
 		var ctr = -1;
 		return (
-			<table className="table">
+			<table className="table table-hover">
 				<tbody>
 					<tr>
 						<td>
@@ -88,7 +92,7 @@ class AffiliatesEdit extends React.Component {
 		var affIds = mainEl.state.affiliatesFieldIds;
 		var ctr = -1;
 		return (
-		<table className="table">
+		<table className="table table-hover">
 			<tbody>
 				<tr>
 					<td>
@@ -104,14 +108,18 @@ class AffiliatesEdit extends React.Component {
 					aff1.map(function(i1) {
 						ctr++;
 						return (
-							<tr>
+							<tr style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
 								<td>
-									<input type="text" className="form-control" id={"a" + affIds[ctr]} placeholder={"Повна назва"} onChange={mainEl.affiliateValueChanged} value={(i1 == null) ? "" : i1}></input>
-								</td>
-								<td>
-									<button type="button" className="btn btn-link" id={"a" + affIds[ctr] + ".remove"} onClick={mainEl.removeAffiliateEntry}>
-										<span className="glyphicon glyphicon-minus"></span>
-									</button>
+									<div className="row">
+										<div className="col-md-9">
+											<input type="text" className="form-control" id={"a" + affIds[ctr]} placeholder={"Повна назва"} onChange={mainEl.affiliateValueChanged} value={(i1 == null) ? "" : i1}></input>
+										</div>
+										<div className="col-md-1">
+											<button type="button" className="btn btn-link" id={"a" + affIds[ctr] + ".remove"} onClick={mainEl.removeAffiliateEntry}>
+												<span className="glyphicon glyphicon-minus"></span>
+											</button>
+										</div>
+									</div>
 								</td>
 							</tr>
 						);
@@ -149,13 +157,19 @@ class EntityEdit extends React.Component {
 		if (this.props.data != null)
 			for (var key1 in this.props.data) {
 				var valueToSubmit = this.props.data[key1];
+				var grenade = this;
 				if (key1 == 'affiliates')
 					valueToSubmit = this.props.data[key1].map(function(item1) {
-						this.setState({nextAffFieldId: this.state.nextAffFieldId + 1});
+						grenade.state.affiliatesFieldIds.push(grenade.state.nextAffFieldId);
+						grenade.setState({nextAffFieldId: grenade.state.nextAffFieldId + 1});
 						return item1.entity_name;
 					});
-				if (key1 == 'licenses')
-					this.props.data[key1].map(function(item1) {this.setState({nextLicFieldId: this.state.nextLicFieldId + 1})});
+				if (key1 == 'licenses') {
+					this.props.data[key1].map(function(item1) {
+						grenade.state.licensesFieldIds.push(grenade.state.nextLicFieldId);
+						grenade.setState({nextLicFieldId: grenade.state.nextLicFieldId + 1});
+					});
+				}
 				var arg = {};
 				arg[key1] = valueToSubmit;
 				this.setState(arg);
@@ -244,7 +258,7 @@ class EntityEdit extends React.Component {
 				<h1 className="text-center">Редагування інформації про фінансову установу</h1>
 				<div className="row">
 					<div className="col-md-12">
-							<table className="table table-striped table-bordered">
+							<table className="table table-hover table-bordered" style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
 								<tbody>
 									{
 										simpleProps.map(function(item1) {

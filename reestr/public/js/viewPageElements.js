@@ -33,20 +33,10 @@ class OneLicenseView extends React.Component {
 					if (item.field == "due_date") {
 						if (value1 == null)
 							return <td>-</td>;
-						else {
-							value1 = value1.substr(0, value1.indexOf("T"));
-							var arr1 = value1.split("-");
+						else
 							return (
-								<td>{arr1[2] + "." + arr1[1] + "." + arr1[0]}</td>
+								<td>{value1}</td>
 							)
-						}
-					}
-					else if (item.field == "start_date") {
-						value1 = value1.substr(0, value1.indexOf("T"));
-						var arr1 = value1.split("-");
-						return (
-							<td>{arr1[2] + "." + arr1[1] + "." + arr1[0]}</td>
-						)
 					}
 					else
 						return (
@@ -100,19 +90,13 @@ class EntityView extends React.Component {
 	render() {
 		var data1 = this.props.data;
 		var stateCtrl1 = this.props.stateController;
-		for (var i = 0; i < data1.affiliates.length; i++) {
-			var value1 = data1.affiliates[i].certified_date;
-			value1 = value1.substr(0, value1.indexOf("T"));
-			var arr1 = value1.split("-");
-			data1.affiliates[i].certified_date = arr1[2] + "." + arr1[1] + "." + arr1[0];
-		}
 		return (
 			<div className="container">
 				<h1 className="text-center">Інформація про фінансову установу</h1>
 				<table>
 					<tbody>
 						<tr><td>
-							<table className="table table-striped table-bordered">
+							<table className="table table-striped">
 								<tbody>
 									{
 										simpleProps.map(function(item1) {
