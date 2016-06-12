@@ -5,6 +5,8 @@ var simpleProps = ["entity_name", "entity_type", "edrpou", "certificate_series",
 					"certified_date", "address", "phone", "email", "licenses", "service_type"];
 var regexProps = ["entity_name", "entity_type", "address", "service_type", "manager_full_name"];
 
+var invalidDateFormatMsg = {"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР", error: true};
+
 var parseDate = function(str) {
 	var g1 = str.split('.');
 	if (g1.length != 3)
@@ -12,7 +14,10 @@ var parseDate = function(str) {
 	for (var i = 0; i < 3; i++)
 		if (isNaN(g1[i] * 0))
 			return null;
-	return new Date(g1[2], g1[1] - 1, g1[0]);
+	var mbResult = new Date(g1[2], g1[1] - 1, g1[0]);
+	if ((mbResult.getDate() != g1[0]) || (mbResult.getMonth() != g1[1] - 1) || (mbResult.getFullYear() != g1[2]))
+		return null;
+	return mbResult;
 }
 
 var tokenizeSecondPart = function(secondPart) {
@@ -53,7 +58,7 @@ module.exports.postLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
 		var d1 = parseDate(req.body.certified_date);
 		if (d1 == null)
-			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+			res.json(invalidDateFormatMsg);
 		else
 			req.body.certified_date = d1;
 	}
@@ -82,18 +87,27 @@ module.exports.postLegalEntity = function(req, res) {
 							var l1 = req.body.licenses[i];
 							var g1 = l1.start_date.split('.');
 							if (g1.length != 3)
-								res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+								res.json(invalidDateFormatMsg);
 							en1.licenses[i].start_date = new Date(g1[2], g1[1], g1[0]);
 							if (l1.due_date == null)
 								continue;
 							var g2 = l1.due_date.split('.');
 							if (g2.length != 3)
-								res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+								res.json(invalidDateFormatMsg);
 							en1.licenses[i].due_date = new Date(g2[2], g2[1], g2[0]);
 						}
 						en1.save(function(err) {
 							if (err) {
-								res.send(err);
+								var text = "Невідома помилка збереження інформації";
+								if (("errmsg" in err) && (err.errmsg.indexOf("duplicate") != -1)) {
+									if (err.errmsg.indexOf("name") != -1)
+										text = "Фінансова установа з такою назвою вже існує";
+									else
+										text = "Фінансова установа з таким кодом за ЄДРПОУ вже існує";
+								}
+								if ("errors" in err)
+									text = "Не всі обов\'язкові поля заповнені або деякі поля заповнені неправильно";
+								res.json({message: text, error: true});
 							}
 							else {
 								res.json({message: "Дані про нову фінансову установу успішно збережені"});
@@ -108,7 +122,7 @@ module.exports.postLegalEntity = function(req, res) {
 								return;
 							}
 							if (objs2.length == 0) {
-								res.json({message: "Установа \"" + name1 + "\" не була знайдена в Реєстрі"});
+								res.json({message: "Установа \"" + name1 + "\" не була знайдена в Реєстрі", error: true});
 							}
 							else {
 								en1.affiliates.push(objs2[0]._id);
@@ -124,7 +138,7 @@ module.exports.postLegalEntity = function(req, res) {
 				ind1.full_name = req.body.manager_full_name;
 				ind1.save(function(err) {
 					if (err) {
-						res.send(err);
+						res.json({message: (req.body.manager_full_name == null) ? "Необхідно вказати ім\'я керівника" : "Невідома помилка збереження", error: true});
 					}
 					else {
 						newObjs = [ind1];
@@ -140,7 +154,6 @@ module.exports.postLegalEntity = function(req, res) {
 };
 
 module.exports.getLegalEntity = function(req, res) {
-	console.log(req.body.certified_date);
 	var filter = tokenizeSecondPart(req.params.filter1);
 	for (var key1 in filter)
 		if (regexProps.indexOf(key1) != -1)
@@ -148,11 +161,10 @@ module.exports.getLegalEntity = function(req, res) {
 	if (filter.certified_date) {
 		var d1 = parseDate(filter.certified_date);
 		if (d1 == null)
-			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+			res.json(invalidDateFormatMsg);
 		else
 			filter.certified_date = d1;
 	}
-	console.log(filter);
 	var anyway = function() {
 		LegalEntity.find(filter, function(err, objs) {
 			if (err)
@@ -208,7 +220,7 @@ module.exports.getLegalEntity = function(req, res) {
 								else {
 									LegalEntity.findById(objIds.pop(), function(err, obj3) {
 										if (err) {
-											res.send(err);
+											res.json(err);
 										}
 										else {
 											var obj4 = {};
@@ -275,16 +287,16 @@ module.exports.putByIdLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
 		var d1 = parseDate(req.body.certified_date);
 		if (d1 == null)
-			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+			res.json(invalidDateFormatMsg);
 		else
 			req.body.certified_date = d1;
 	}
 	LegalEntity.findById(req.body._id, function(err, obj) {
 		if (err) {
-			res.send(err);
+			res.json(err);
 		}
 		if (obj == null) {
-			res.json({"message": "Така фінансова установа не була знайдена"});
+			res.json({"message": "Така фінансова установа не була знайдена", error: true});
 		}
 		else {
 			var anyway = function(managerId) {
@@ -308,13 +320,13 @@ module.exports.putByIdLegalEntity = function(req, res) {
 											var lic1 = {};
 											lic1.start_date = parseDate(req.body.licenses[j].start_date);
 											if (lic1.start_date == null)
-												res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+												res.json(invalidDateFormatMsg);
 											if (req.body.licenses[j].due_date == null)
 												lic1.due_date = null;
 											else {
 												lic1.due_date = parseDate(req.body.licenses[j].due_date);
 												if (lic1.due_date == null)
-													res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+													res.json(invalidDateFormatMsg);
 											}
 											lic1.service_name = req.body.licenses[j].service_name;
 											lic1.license_number = req.body.licenses[j].license_number;
@@ -325,7 +337,7 @@ module.exports.putByIdLegalEntity = function(req, res) {
 							}
 							obj.save(function(err) {
 								if (err) {
-									res.send(err);
+									res.json(err);
 								}
 								else {
 									res.json({message: "Успішно оновлені дані про фінансову установу"});
@@ -352,13 +364,13 @@ module.exports.putByIdLegalEntity = function(req, res) {
 									var lic1 = {};
 									lic1.start_date = parseDate(req.body.licenses[j].start_date);
 									if (lic1.start_date == null)
-										res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+										res.json(invalidDateFormatMsg);
 									if (req.body.licenses[j].due_date == null)
 										lic1.due_date = null;
 									else {
 										lic1.due_date = parseDate(req.body.licenses[j].due_date);
 										if (lic1.due_date == null)
-											res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+											res.json(invalidDateFormatMsg);
 									}
 									lic1.service_name = req.body.licenses[j].service_name;
 									lic1.license_number = req.body.licenses[j].license_number;
@@ -410,7 +422,7 @@ module.exports.deleteLegalEntity = function(req, res) {
 	if (req.body.certified_date) {
 		var d1 = parseDate(req.body.certified_date);
 		if (d1 == null)
-			res.send({"message": "Неправильний формат дати. Правильний: ДД.ММ.РРРР"});
+			res.json(invalidDateFormatMsg);
 		else
 			req.body.certified_date = d1;
 	}
@@ -420,7 +432,7 @@ module.exports.deleteLegalEntity = function(req, res) {
 			if (err)
 				res.send(err);
 			if (objs.length == 0)
-				res.json({"message": "Такі фінансові установи вже були видалені"});
+				res.json({message: "Такі фінансові установи вже були видалені або ще не були створені"});
 			else {
 				var ids = [];
 				for (var i = 0; i < objs.length; i++) {
