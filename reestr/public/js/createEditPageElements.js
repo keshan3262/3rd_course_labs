@@ -256,31 +256,43 @@ class EntityEdit extends React.Component {
 		return (
 			<div className="container">
 				<h1 className="text-center">Редагування інформації про фінансову установу</h1>
+				<div className="row" hidden={grenade.props.message == null}>
+					<div className="col-md-12">
+						<div className="alert alert-danger">
+							{grenade.props.message}
+						</div>
+					</div>
+				</div>
 				<div className="row">
 					<div className="col-md-12">
-							<table className="table table-hover table-bordered" style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
-								<tbody>
-									{
-										simpleProps.map(function(item1) {
-											return (
-												<tr>
-													<td>
-														<div className="row">
-															<div className="col-md-3 col-sm-5">
-																{item1.label}
-															</div>
-															<div className="col-md-8 col-sm-6">
-																<input type="text" className="form-control" id={item1.field} placeholder={item1.label} onChange={grenade.simplePropChanged} value={((data1 != null) && (data1[item1.field] != null)) ? data1[item1.field] : ""}>
-																</input>
-															</div>
+						<table className="table table-hover table-bordered" style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
+							<tbody>
+								{
+									simpleProps.map(function(item1) {
+										return (
+											<tr>
+												<td>
+													<div className="row">
+														<div className="col-md-3 col-sm-5">
+															{item1.label}
+															{((item1.field != 'phone') && (item1.field != 'email')) ? (<sup><span style={{color: "red"}}>{"*"}</span></sup>) : ""}
 														</div>
-													</td>
-												</tr>
-											)
-										})
-									}
-								</tbody>
-							</table>
+														<div className="col-md-8 col-sm-6">
+															<input type="text" className="form-control" id={item1.field} placeholder={item1.label} onChange={grenade.simplePropChanged} value={((data1 != null) && (data1[item1.field] != null)) ? data1[item1.field] : ""}>
+															</input>
+														</div>
+													</div>
+												</td>
+											</tr>
+										)
+									})
+								}
+							</tbody>
+						</table>
+						<span>
+							<sup><span style={{color: "red"}}>{"*"}</span></sup>
+							{" - обов'язкові для заповнення поля"}
+						</span>
 					</div>
 				</div>
 				<div className="row">

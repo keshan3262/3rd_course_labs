@@ -136,8 +136,12 @@ class Body extends React.Component {
 			console.log(err);
 			alert("Не вдалося обробити запит");
 		}
-		else
-			this.setState({state: NavState.OnlyMessage, message: result.body.message, institutions: []});
+		else {
+			var newState = {message: result.body.message, institutions: []};
+			if (!result.body.error)
+				newState.state = NavState.OnlyMessage;
+			this.setState(newState);
+		}
 	}
 	goToCreate(event) {
 		this.setState({state: NavState.Create, institutions: [], id: null});
@@ -169,7 +173,7 @@ class Body extends React.Component {
 							break;
 						}
 						case NavState.Create: case NavState.Edit: {
-							return (<EntityEdit stateController={grenade} data={(item1 == NavState.Edit) ? grenade.state.institutions[0] : null} />);
+							return (<EntityEdit stateController={grenade} data={(item1 == NavState.Edit) ? grenade.state.institutions[0] : null} message={grenade.state.message}/>);
 							break;
 						}
 						default: {
