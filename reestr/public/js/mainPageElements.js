@@ -1,18 +1,23 @@
 class SearchWidget extends React.Component {
 	constructor() {
 		super();
-		this.state = {filter: {}};
-		this.textChanged = this.textChanged.bind(this);
 		this.search = this.search.bind(this);
 	}
-	textChanged(event) {
-		if (event.target.value == "")
-			delete this.state.filter[event.target.id];
-		else
-			this.state.filter[event.target.id] = event.target.value;
-	}
 	search(event) {
-		this.props.stateController.search(this.state.filter, event);
+		var filter = {};
+		for (var i = 0; i < searchFields.length; i++) {
+			for (var j = 0; j < searchFields[i].length; j++) {
+				if ("button" in searchFields[i][j])
+					continue;
+				var value1 = document.getElementById(searchFields[i][j].field).value;
+				if (value1 == "")
+					continue;
+				else
+					filter[searchFields[i][j].field] = value1;
+			}
+		}
+		console.log(filter);
+		this.props.stateController.search(filter, event);
 	}
 	render() {
 		var data1 = this.props.data;
@@ -42,7 +47,7 @@ class SearchWidget extends React.Component {
 											spanCtr += subitem.colspan;
 											return (
 												<div className={"col-md-" + subitem.colspan}>
-													<input type="text" className="form-control" placeholder={subitem.label} id={subitem.field} onChange={grenade.textChanged}></input>
+													<input type="text" className="form-control" placeholder={subitem.label} id={subitem.field} key={subitem.field}></input>
 												</div>
 											);
 										}

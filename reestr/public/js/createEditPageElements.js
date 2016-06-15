@@ -18,7 +18,6 @@ class OneLicenseEdit extends React.Component {
 		var elementId = this.props.id;
 		var grenade = this;
 		var mainEl = this.props.mainElement;
-		var data1 = this.props.data;
 		return (
 			<tr style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
 				<td>
@@ -27,7 +26,7 @@ class OneLicenseEdit extends React.Component {
 						licenseProps.map(function(item) {
 							return (
 								<div className={"col-md-" + ((item.field == "service_name") ? 5 : item.colspan * 2)}>
-									<input type="text" className="form-control" id={elementId + "." + item.field} placeholder={item.label} onChange={mainEl.licenseValueChanged} value={(data1 != null) ? data1[item.field] : ""}></input>
+									<input type="text" className="form-control" id={elementId + "." + item.field} key={elementId + "." + item.field} placeholder={item.label}></input>
 								</div>
 							);
 						})
@@ -51,7 +50,6 @@ class LicensesEdit extends React.Component {
 	render() {
 		var grenade = this;
 		var mainEl = this.props.mainElement;
-		var lic1 = mainEl.state.licenses;
 		var licIds = mainEl.state.licensesFieldIds;
 		var ctr = -1;
 		return (
@@ -68,10 +66,10 @@ class LicensesEdit extends React.Component {
 						</td>
 					</tr>
 					{
-						lic1.map(function(i1) {
+						licIds.map(function(id1) {
 							ctr++;
 							return (
-								<OneLicenseEdit parent={grenade} id={licIds[ctr]} mainElement={mainEl} data={i1}/>
+								<OneLicenseEdit parent={grenade} id={id1} key={id1} mainElement={mainEl}/>
 							);
 						})
 					}
@@ -88,7 +86,6 @@ class AffiliatesEdit extends React.Component {
 	render() {
 		var grenade = this;
 		var mainEl = this.props.mainElement;
-		var aff1 = mainEl.state.affiliates;
 		var affIds = mainEl.state.affiliatesFieldIds;
 		var ctr = -1;
 		return (
@@ -105,17 +102,17 @@ class AffiliatesEdit extends React.Component {
 					</td>
 				</tr>
 				{
-					aff1.map(function(i1) {
+					affIds.map(function(id1) {
 						ctr++;
 						return (
 							<tr style={{"backgroundColor": "rgba(255, 255, 255, 0.33)"}}>
 								<td>
 									<div className="row">
 										<div className="col-md-9">
-											<input type="text" className="form-control" id={"a" + affIds[ctr]} placeholder={"Повна назва"} onChange={mainEl.affiliateValueChanged} value={(i1 == null) ? "" : i1}></input>
+											<input type="text" className="form-control" id={"a" + id1} key={"a" + id1} placeholder={"Повна назва"}></input>
 										</div>
 										<div className="col-md-1">
-											<button type="button" className="btn btn-link" id={"a" + affIds[ctr] + ".remove"} onClick={mainEl.removeAffiliateEntry}>
+											<button type="button" className="btn btn-link" id={"a" + id1 + ".remove"} key={"a" + id1 + ".remove"} onClick={mainEl.removeAffiliateEntry}>
 												<span className="glyphicon glyphicon-minus"></span>
 											</button>
 										</div>
@@ -139,36 +136,50 @@ class EntityEdit extends React.Component {
 			nextAffFieldId: 0,
 			affiliatesFieldIds: [],
 			licensesFieldIds: [],
-			licenses: [],
-			affiliates: []
 		};
-		for (var i = 0; i < simpleProps.length; i++)
-			this.state[simpleProps[i].field] = null;
-		this.simplePropChanged = this.simplePropChanged.bind(this);
 		this.addAffiliateEntry = this.addAffiliateEntry.bind(this);
 		this.addLicenseEntry = this.addLicenseEntry.bind(this);
-		this.licenseValueChanged = this.licenseValueChanged.bind(this);
-		this.affiliateValueChanged = this.affiliateValueChanged.bind(this);
 		this.finishEdit = this.finishEdit.bind(this);
 		this.removeLicenseEntry = this.removeLicenseEntry.bind(this);
 		this.removeAffiliateEntry = this.removeAffiliateEntry.bind(this);
 	}
 	componentWillMount() {
+		var grenade = this;
+		if (this.props.data != null) {
+			var affiliates = this.props.data.affiliates;
+			var licenses = this.props.data.licenses;
+			var affCtr = 0;
+			var licCtr = 0;
+			for (var i = 0; i < affiliates.length; i++) {
+				grenade.state.affiliatesFieldIds.push(affCtr);
+				affCtr++;
+			}
+			grenade.setState({nextAffFieldId: affCtr});
+			for (var i = 0; i < licenses.length; i++) {
+				grenade.setState.licensesFieldIds.push(licCtr);
+				licCtr++;
+			}
+			grenade.setState({nextLicFieldId: licCtr});
+		}
+	}
+	componentDidMount() {
 		if (this.props.data != null)
 			for (var key1 in this.props.data) {
 				var valueToSubmit = this.props.data[key1];
 				var grenade = this;
-				if (key1 == 'affiliates')
-					valueToSubmit = this.props.data[key1].map(function(item1) {
-						grenade.state.affiliatesFieldIds.push(grenade.state.nextAffFieldId);
-						grenade.setState({nextAffFieldId: grenade.state.nextAffFieldId + 1});
-						return item1.entity_name;
-					});
-				if (key1 == 'licenses') {
-					this.props.data[key1].map(function(item1) {
-						grenade.state.licensesFieldIds.push(grenade.state.nextLicFieldId);
-						grenade.setState({nextLicFieldId: grenade.state.nextLicFieldId + 1});
-					});
+				if (key1 == 'affiliates') {
+					var ids = this.state.affiliatesFieldIds;
+					for (var i = 0; i < ids.length; i++)
+						document.getElementById("a" + ids[i]).value = this.props.data.affiliates[i].entity_name;
+				}
+			 	else if (key1 == 'licenses') {
+					var ids = this.state.licensesFieldIds;
+					for (var i = 0; i < ids.length; i++)
+						for (var j = 0; j < licenseProps.length; j++)
+							document.getElementById(ids[i] + "." + licenseProps[i].field).value = this.props.data.licenses[i][licenseProps[i]];
+				}
+				else if (key1 != '_id') {
+					document.getElementById(key1).value = valueToSubmit;
 				}
 				var arg = {};
 				arg[key1] = valueToSubmit;
@@ -180,77 +191,51 @@ class EntityEdit extends React.Component {
 		var oldLicIds = this.state.licensesFieldIds;
 		var ind = notStrictEqualIndexOf(oldLicIds, id);
 		var newLicIds = copyWithout(oldLicIds, ind);
-		var oldLicenses = this.state.licenses;
-		var newLicenses = copyWithout(oldLicenses, ind);
-		this.setState({licensesFieldIds: newLicIds, licenses: newLicenses});
+		this.setState({licensesFieldIds: newLicIds});
 	}
 	removeAffiliateEntry(event) {
 		var id = event.target.id.split(".")[0].substr(1);
 		var oldAffIds = this.state.affiliatesFieldIds;
 		var ind = notStrictEqualIndexOf(oldAffIds, id);
 		var newAffIds = copyWithout(oldAffIds, ind);
-		var oldAffiliates = this.state.affiliates;
-		var newAffiliates = copyWithout(oldAffiliates, ind);
-		this.setState({affiliatesFieldIds: newAffIds, affiliates: newAffiliates});
+		this.setState({affiliatesFieldIds: newAffIds});
 	}
 	finishEdit(event) {
-		var licenses = this.state.licenses;
+		var newData = {};
+		for (var i = 0; i < simpleProps.length; i++) {
+			var value1 = document.getElementById(simpleProps[i].field).value;
+			if ((value1 == "") && (simpleProps[i].field != "phone") && (simpleProps[i].field != "email"))
+				continue;
+			else
+				newData[simpleProps[i].field] = value1;
+		}
 		var newLicenses = [];
-		licenses.map(function(item) {if (item != null) newLicenses.push(item)});
-		var affiliates = this.state.affiliates;
-		var newAffiliates = [];
-		affiliates.map(function(item) {if (item != null) newAffiliates.push(item)});
-		this.setState({licenses: newLicenses, affiliates: newAffiliates});
-		var newData = {};
-		var forbiddenKeys = ["nextLicFieldId", "nextAffFieldId", "affiliatesFieldIds", "licensesFieldIds"];
-		for (var key1 in this.state)
-			if (forbiddenKeys.indexOf(key1) == -1) {
-				if ((this.state[key1] == null) && (key1 != 'phone') && (key1 != 'email'))
-					continue;
-				else
-					newData[key1] = this.state[key1];
+		for (var i = 0; i < this.state.licensesFieldIds.length; i++) {
+			var license1 = {};
+			for (var j = 0; j < licenseProps.length; j++) {
+				var value1 = document.getElementById(this.state.licensesFieldIds[i] + "." + licenseProps[j].field).value;
+				license1[licenseProps[j]] = (value1 == "") ? null : value1;
 			}
+			newLicenses.push(license1);
+		}
+		newData.licenses = newLicenses;
+		var newAffiliates = [];
+		for (var i = 0; i < this.state.affiliatesFieldIds.length; i++)
+			newAffiliates.push(document.getElementById("a" + this.state.affiliatesFieldIds[i]).value);
+		newData.affiliates = newAffiliates;
 		this.props.stateController.finishEdit(event, newData);
-	}
-	simplePropChanged(event) {
-		var newData = {};
-		newData[event.target.id] = (event.target.value == "") ? null : event.target.value;
-		this.setState(newData);
 	}
 	addAffiliateEntry(event) {
 		var newAffIds = this.state.affiliatesFieldIds.map(function(x) {return x;});
 		newAffIds.push(this.state.nextAffFieldId);
-		var newAffiliates = this.state.affiliates.map(function(x) {return x;});
-		newAffiliates.push(null);
-		this.setState({nextAffFieldId: this.state.nextAffFieldId + 1, affiliatesFieldIds: newAffIds, affiliates: newAffiliates});
+		this.setState({nextAffFieldId: this.state.nextAffFieldId + 1, affiliatesFieldIds: newAffIds});
 	}
 	addLicenseEntry(event) {
 		var newLicIds = this.state.licensesFieldIds.map(function(x) {return x;});
 		newLicIds.push(this.state.nextLicFieldId);
-		var newLicenses = this.state.licenses.map(function(x) {return x;});
-		newLicenses.push(null);
-		this.setState({nextLicFieldId: this.state.nextLicFieldId + 1, licensesFieldIds: newLicIds, licenses: newLicenses});
-	}
-	licenseValueChanged(event) {
-		var args1 = event.target.id.split(".");
-		var ind = notStrictEqualIndexOf(this.state.licensesFieldIds, args1[0]);
-		var oldLicenses = this.state.licenses;
-		var newLicenses = oldLicenses.map(function(x) {return x;});
-		if (newLicenses[ind] == null)
-			newLicenses[ind] = {};
-		newLicenses[ind][args1[1]] = (event.target.value == "") ? null : event.target.value;
-		this.setState({licenses: newLicenses});
-	}
-	affiliateValueChanged(event) {
-		var args1 = event.target.id.substr(1);
-		var ind = notStrictEqualIndexOf(this.state.affiliatesFieldIds, args1);
-		var oldAffiliates = this.state.affiliates;
-		var newAffiliates = oldAffiliates.map(function(x) {return x;});
-		newAffiliates[ind] = (event.target.value == "") ? null : event.target.value;
-		this.setState({affiliates: newAffiliates});
+		this.setState({nextLicFieldId: this.state.nextLicFieldId + 1, licensesFieldIds: newLicIds});
 	}
 	render() {
-		var data1 = this.state;
 		var stateCtrl1 = this.props.stateController;
 		var grenade = this;
 		return (
@@ -278,7 +263,7 @@ class EntityEdit extends React.Component {
 															{((item1.field != 'phone') && (item1.field != 'email')) ? (<sup><span style={{color: "red"}}>{"*"}</span></sup>) : ""}
 														</div>
 														<div className="col-md-8 col-sm-6">
-															<input type="text" className="form-control" id={item1.field} placeholder={item1.label} onChange={grenade.simplePropChanged} value={((data1 != null) && (data1[item1.field] != null)) ? data1[item1.field] : ""}>
+															<input type="text" className="form-control" id={item1.field} key={item1.field} placeholder={item1.label}>
 															</input>
 														</div>
 													</div>
