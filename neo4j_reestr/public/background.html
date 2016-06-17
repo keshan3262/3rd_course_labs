@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ua" ng-app="reestr">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Державний реєстр фінансових установ</title>
+
+		<link rel="stylesheet" href="styles/bootstrap.min.css">
+		<script>
+			function wheelyDateStrConverter(str1) {
+				var g1 = str1.substring(0, i1.certified_date.indexOf('T')).split('-');
+				return g1[2] + '.' + g1[1] + '.' + g1[0];
+			};
+		</script>
+		<style>
+			body {
+				background:#c7b39b url(img/ribbons.png);
+			}
+			.table-borderless tbody tr td, .table-borderless tbody tr th, .table-borderless thead tr th {
+				border: none;
+			}
+		</style>
+		<script src="js/d3.js"></script>
+		<script src="js/JSXTransformer.js"></script>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/browser.min.js"></script>
+		<script src="js/superagent.js"></script>
+		<script src="js/react.js"></script>
+		<script src="js/react-dom.js"></script>
+		<script src="js/generalWrappers.js" type="text/jsx"></script>
+		<script src="js/mainPageElements.js" type="text/jsx"></script>
+		<script src="js/viewPageElements.js" type="text/jsx"></script>
+		<script src="js/createEditPageElements.js" type="text/jsx"></script>
+		<script src="js/statsView.js" type="text/jsx"></script>
+	</head>
+	<body>
+		<div id="mount-point"></div>
+		<script src="js/great_renderer.js" type="text/jsx" />
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<!--<script src="scripts/jquery.min.js"></script>-->
+		<!-- Include all compiled plugins (below), or include individual files as needed -->
+		<!--<script src="scripts/bootstrap.min.js"></script>-->
+	</body>
+</html>
