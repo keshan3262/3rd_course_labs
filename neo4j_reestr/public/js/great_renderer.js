@@ -1,6 +1,6 @@
 var request = window.superagent;
 
-NavState = {Main: 0, View: 1, Edit: 2, OnlyMessage: 3, Create: 4};
+NavState = {Main: 0, View: 1, Edit: 2, OnlyMessage: 3, Create: 4, Statistics: 5};
 
 class Body extends React.Component {
 	constructor() {
@@ -22,6 +22,7 @@ class Body extends React.Component {
 		this.resetState = this.resetState.bind(this);
 		this.goToCancel = this.goToCancel.bind(this);
 		this.finishEdit = this.finishEdit.bind(this);
+		this.goToStatistics = this.goToStatistics.bind(this);
 	}
 	resetState(event) {
 		this.setState(
@@ -33,6 +34,19 @@ class Body extends React.Component {
 			}
 		);
 	}
+	goToStatistics(event) {
+		event.preventDefault();
+		var grenade = this;
+		request.get('/statistics').set('Cookie', null).end(function(err, res) {
+			if (err || !res.ok) {
+				console.log(err);
+				alert("Не вдалося обробити запит");
+			}
+			else {
+				grenade.setState({statsData: res.body, state: NavState.Statistics, institutions: []});
+			}
+		})
+	}
 	finishEdit(event, objNewData) {
 		event.preventDefault();
 		if (this.state.state == NavState.Edit) {
@@ -40,7 +54,7 @@ class Body extends React.Component {
 			request.put("/legal_entity_json/").set('Cookie', null).send(objNewData).end(this.goToMessage);
 		}
 		else {
-			request.post("/legal_entity_json/").set('Cookie, null').send(objNewData).end(this.goToMessage);
+			request.post("/legal_entity_json/").set('Cookie', null).send(objNewData).end(this.goToMessage);
 		}
 	}
 	changeSearchState(err, res) {
@@ -159,6 +173,9 @@ class Body extends React.Component {
 					<div className="nav navbar-nav">
 						<button className="btn navbar-brand btn-link" onClick={grenade.resetState}>Фінансові установи</button>
 					</div>
+					<div className="nav navbar-nav">
+						<button className="btn navbar-brand btn-link" onClick={grenade.goToStatistics}>Статистика</button>
+					</div>
 				</div>
 			</nav>
 			{
@@ -174,6 +191,10 @@ class Body extends React.Component {
 						}
 						case NavState.Create: case NavState.Edit: {
 							return (<EntityEdit stateController={grenade} data={(item1 == NavState.Edit) ? grenade.state.institutions[0] : null} message={grenade.state.message}/>);
+							break;
+						}
+						case NavState.Statistics: {
+							return (<StatsView data={grenade.state.statsData}/>);
 							break;
 						}
 						default: {
