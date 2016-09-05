@@ -5,7 +5,7 @@ module.exports = function (app, session) {
 
 	//home page
     app.get('/', function(req, res) {
-		res.sendFile('/home/keshan/odessa/neo4j_reestr/public/background.html');
+		res.sendFile(__dirname.substr(0, __dirname.length - '/app'.length) + '/public/background.html');
     });
 
 	//only in get method parameters are not in req.body
