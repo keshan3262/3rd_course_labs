@@ -2,12 +2,10 @@ var LegalEntityOperations = require('./models/legal_entity_operations');
 var LegalEntity = require('./models/legal_entity');
 
 module.exports = function (app) {
-    //api ---------------------------------------------------------------------
-
+	//api ---------------------------------------------------------------------
 	//home page
     app.get('/', function(req, res) {
-		//res.sendFile(__dirname + '/public/background.html');
-		res.sendFile('/home/keshan/odessa/reestr/public/background.html');
+		res.sendFile(__dirname.substr(0, __dirname.length - '/app'.length) + '/public/background.html');
     });
 
 	//only in get method parameters are not in req.body
